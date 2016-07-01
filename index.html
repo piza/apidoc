@@ -93,6 +93,12 @@
         <div class="clearfix"></div>
     </li>
 </script>
+<script type="text/template" id="apiCallItemTmp">
+    <li class="list-group-item">
+        <%=item.type%>
+        <div class="clearfix"></div>
+    </li>
+</script>
 <script type="text/template" id="apiFormTmp">
     <form class="form-horizontal">
         <div class="form-group">
@@ -144,6 +150,12 @@
 <script type="text/template" id="apiDetailsTmp">
     <div class="row">
         <div class="col-md-6">
+            <input type="button" class="btn btn-success pull-right" style="margin-top: -46px;" value="生成注释" id="generateBtn">
+        </div>
+    </div>
+    <br>
+    <div class="row">
+        <div class="col-md-6">
             <label>名字:</label><span><%=api.apiName%></span>
         </div>
         <div class="col-md-6"><label>http方法:</label><span><%=api.method%></span></div>
@@ -164,7 +176,7 @@
         <div class="col-md-5 rightBorder">
             <ul class="list-group callList">
                 <% _.each(callList,function(callRecord){%>
-                 <li class="list-group-item"><%=callRecord.name%></li>
+                 <li class="list-group-item"><%=callRecord.type%></li>
                 <%});%>
             </ul>
 
@@ -193,7 +205,22 @@
     </div>
 
 </script>
-
+<script type="text/template" id="apiDocTmp">
+    /**<br>
+    * @api {<%=api.method%>} <%=api.url%> <%=api.apiName%><br>
+    * @apiVersion <%=api.apiVersion%><br>
+    * @apiName <%=api.apiName%><br>
+    * @apiGroup  <%=groupName%><br>
+    * @apiDescription <%=api.apiDesc%><br>
+    *<br>
+    <%if(callList.length>0){
+      _.each(callList,function(callRecord){
+    %>
+    *@<%=callRecord.type%> <%=callRecord.url%><br>
+    *<%=callRecord.result%><br>
+    <%});}%>
+    */
+</script>
 <script  type="text/javascript">
     var groupList,apiList,listView,infoView;
 $(function(){
@@ -308,20 +335,28 @@ $(function(){
         });
         var ApiDetailsView=Backbone.View.extend({
             apiDetailsTmp: _.template($("#apiDetailsTmp").html()),
+            apiCallItemTmp: _.template($("#apiCallItemTmp").html()),
+            apiDocTmp: _.template($("#apiDocTmp").html()),
             events:{
               "click #callBtn":"callApi",
               "click #cleanBtn":"cleanView",
-              "click #saveBtn":"saveCall"
+              "click #saveBtn":"saveCall",
+              "click #generateBtn":"generateDoc"
             },
             initialize:function(){
 
             },
             render:function(){
-                var callList=[];
-                this.$el.html(this.apiDetailsTmp({"callList":callList,"api":this.model.toJSON()}));
+                if(this.model.get("callList")){
+                    this.callList=JSON.parse(this.model.get("callList"));
+                }else{
+                    this.callList=[];
+                }
+                this.$el.html(this.apiDetailsTmp({"callList":this.callList,"api":this.model.toJSON()}));
                 this.urlInpt=this.$("#urlInpt");
                 this.paramJson=this.$(".paramJson");
                 this.resultJson=this.$(".resultJson");
+
             },
             callApi:function(){
                 var param=this.paramJson.text();
@@ -352,7 +387,35 @@ $(function(){
 
             },
             saveCall:function(){
-
+                var that=this;
+                layer.confirm("请选择API类型",{btn:['成功例子','失败例子']},function(){
+                    that.addCallList("apiSuccessExample");
+                    layer.closeAll();
+                },function(){
+                    that.addCallList("apiErrorExample");
+                    layer.closeAll();
+                });
+            },
+            addCallList:function(type){
+                var callData={
+                    "type":type,
+                    "url":this.urlInpt.val(),
+                     "param":this.paramJson.text(),
+                     "result":this.resultJson.text()
+                };
+                this.callList.push(callData);
+                this.model.set({"callList":JSON.stringify(this.callList)});
+                this.model.save();
+                this.$(".callList").prepend(this.apiCallItemTmp({"item":callData}));
+            },
+            generateDoc:function(){
+                var groupName=groupList.at(this.model.get("groupId")).get("groupName");
+                layer.open({
+                    type: 1,
+                    skin: 'layui-layer-rim', //加上边框
+                    area: ['620px', '540px'], //宽高
+                    content: this.apiDocTmp({"groupName":groupName,"api":this.model.toJSON(),"callList":this.callList})
+                });
             }
         });
         var ApiInfoView=Backbone.View.extend({
