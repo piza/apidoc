@@ -108,6 +108,20 @@
         <div class="clearfix"></div>
     </li>
 </script>
+<script type="text/template" id="apiParamItemTmp">
+    <div class="col-md-4" id="param-item-<%=index%>">
+        <span><%=item.apiParamName%></span>
+        <span><%=item.dataType%></span>
+        <span><%=item.apiParamDesc%></span>
+        <button type="button" class="btn btn-default btn-sm pull-right deleteParamBtn" paramIndex="<%=index%>">
+            <span class="glyphicon glyphicon-remove" aria-hidden="true" paramIndex="<%=index%>"></span>
+        </button>
+        <button type="button" class="btn btn-default btn-sm pull-right editParamBtn" paramIndex="<%=index%>">
+            <span class="glyphicon glyphicon-plus-sign" aria-hidden="true" paramIndex="<%=index%>"></span>
+        </button>
+
+    </div>
+</script>
 <script type="text/template" id="apiFormTmp">
     <form class="form-horizontal">
         <div class="form-group">
@@ -180,6 +194,13 @@
             <label>描述:</label><span><%=api.apiDesc%></span>
         </div>
     </div>
+    <h5><input type="button" class="btn btn-success pull-right" id="addApiParamBtn" value="添加参数说明">  </h5>
+    <div class="row" id="apiParamList">
+
+    </div>
+    <div class="row" id="apiParamFormWrapper">
+
+    </div>
     <hr>
     <div class="row">
         <div class="col-md-5 rightBorder">
@@ -231,6 +252,31 @@
     <%=strToJavaComment(callRecord.result)%>
     <%});}%>
     */
+</script>
+<script type="text/template" id="apiParamFormTmp">
+    <hr>
+    <form class="form-inline">
+        <div class="form-group">
+            <label for="apiParamName">名字:</label>
+                <input type="text" class="form-control" id="apiParamName" placeholder="api param 名字">
+        </div>
+        <div class="form-group">
+            <label >数据类型:</label>
+            <select class="form-control" id="dataType">
+                <option value="Number">Number</option>
+                <option value="String">String</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="apiParamDesc">描述</label>
+            <input type="text" class="form-control" id="apiParamDesc" placeholder="param 描述">
+        </div>
+
+        <button type="button" class="btn btn-success saveApiParamBtn">保存</button>
+        <button type="button" class="btn btn-success cancelSaveApiParamBtn" style="margin-left: 10px;">取消</button>
+
+    </form>
 </script>
 <script  type="text/javascript">
     var groupList,apiList,listView,infoView;
@@ -380,12 +426,17 @@ $(function(){
             apiDetailsTmp: _.template($("#apiDetailsTmp").html()),
             apiCallItemTmp: _.template($("#apiCallItemTmp").html()),
             apiDocTmp: _.template($("#apiDocTmp").html()),
+            paramItemTmp: _.template($("#apiParamItemTmp").html()),
+            apiParamFormTmp: _.template($("#apiParamFormTmp").html()),
             events:{
               "click #callBtn":"callApi",
               "click #cleanBtn":"cleanView",
               "click #saveBtn":"saveCall",
               "click #generateBtn":"generateDoc",
-              "click .deleteCallBtn":"deleteCall"
+              "click .deleteCallBtn":"deleteCall",
+              "click #addApiParamBtn":"showApiParamForm",
+              "click .saveApiParamBtn":"saveApiParam",
+              "click .cancelSaveApiParamBtn":"cancelSaveApiParam"
             },
             initialize:function(){
 
@@ -402,6 +453,18 @@ $(function(){
                 _.each(this.callList,function(callRecord,index){
                     that.$(".callList").prepend(that.apiCallItemTmp({"index":index,"item":callRecord}));
                 });
+
+
+                if(this.model.get("paramList")){
+                    this.paramList=JSON.parse(this.model.get("paramList"));
+                }else{
+                    this.paramList=[];
+                }
+                var that=this;
+                _.each(this.paramList,function(param,index){
+                    that.$("#apiParamList").append(that.paramItemTmp({"index":index,"item":param}));
+                });
+
                 this.urlInpt=this.$("#urlInpt");
                 this.paramJson=this.$(".paramJson");
                 this.resultJson=this.$(".resultJson");
@@ -475,8 +538,28 @@ $(function(){
                        that.render();
                    layer.close(layerIndex);
                 });
-
-
+            },
+            showApiParamForm:function(){
+                this.$("#apiParamFormWrapper").html(this.apiParamFormTmp());
+            },
+            saveApiParam:function(){
+                var paramData={
+                    "apiParamName":this.$("#apiParamName").val(),
+                    "dataType":this.$("#dataType option:selected").val(),
+                    "apiParamDesc":this.$("#apiParamDesc").val()
+                };
+                if(paramData.apiParamName.length<1 ||paramData.dataType.length<1
+                ||paramData.apiParamDesc.length<1 ){
+                    return layer.msg("参数不能为空!");
+                }
+                this.paramList.push(paramData);
+                this.model.set({"paramList":JSON.stringify(this.paramList)});
+                this.model.save();
+                this.$("#apiParamList").append(this.paramItemTmp({"index":this.paramList.length-1,"item":paramData}));
+                this.$("#apiParamFormWrapper").empty();
+            },
+            cancelSaveApiParam:function(){
+                this.$("#apiParamFormWrapper").empty();
             }
         });
         var ApiInfoView=Backbone.View.extend({
