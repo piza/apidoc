@@ -77,9 +77,12 @@
 
 <script type="text/template" id="groupItemTmp">
        <li class="list-group-item active" groupItemId="<%=gid%>">
-           <%=item.groupName%>
+           <h5 class="pull-left"><%=item.groupName%></h5>
            <button type="button" class="btn btn-default btn-sm pull-right addApiBtn" gid="<%=gid%>">
                <span class="glyphicon glyphicon-plus-sign" aria-hidden="true" gid="<%=gid%>"></span>
+           </button>
+           <button type="button" class="btn btn-default btn-sm pull-right editGroupBtn" gid="<%=gid%>" style="margin-right: 10px;">
+               <span class="glyphicon glyphicon-pencil" aria-hidden="true" gid="<%=gid%>"></span>
            </button>
            <div class="clearfix"></div>
        </li>
@@ -90,12 +93,18 @@
         <button type="button" class="btn btn-default btn-sm pull-right showApiBtn" apiId="<%=item.id%>">
             <span class="glyphicon glyphicon-chevron-right" aria-hidden="true" apiId="<%=item.id%>"></span>
         </button>
+        <button type="button" class="btn btn-default btn-sm pull-right editApiBtn" apiId="<%=item.id%>" style="margin-right: 10px;">
+            <span class="glyphicon glyphicon-pencil" aria-hidden="true" apiId="<%=item.id%>"></span>
+        </button>
         <div class="clearfix"></div>
     </li>
 </script>
 <script type="text/template" id="apiCallItemTmp">
-    <li class="list-group-item">
+    <li class="list-group-item" callIndex="<%=index%>">
         <%=item.type%>
+        <button type="button" class="btn btn-default btn-sm pull-right deleteCallBtn" callIndex="<%=index%>">
+            <span class="glyphicon glyphicon-remove" aria-hidden="true" callIndex="<%=index%>"></span>
+        </button>
         <div class="clearfix"></div>
     </li>
 </script>
@@ -175,9 +184,7 @@
     <div class="row">
         <div class="col-md-5 rightBorder">
             <ul class="list-group callList">
-                <% _.each(callList,function(callRecord){%>
-                 <li class="list-group-item"><%=callRecord.type%></li>
-                <%});%>
+
             </ul>
 
         </div>
@@ -216,8 +223,12 @@
     <%if(callList.length>0){
       _.each(callList,function(callRecord){
     %>
+    <%if(api.method == "POST" || api.method == "PUT"){%>
+    *@apiParamExample {json} 参数<br>
+    <%=strToJavaComment(callRecord.param)%>
+    <%}%>
     *@<%=callRecord.type%> <%=callRecord.url%><br>
-    *<%=callRecord.result%><br>
+    <%=strToJavaComment(callRecord.result)%>
     <%});}%>
     */
 </script>
@@ -264,13 +275,16 @@ $(function(){
             apiItemTmp: _.template($("#apiItemTmp").html()),
             events:{
                 "click .addApiBtn":"addApiForm",
-                "click .showApiBtn":"showApiInfo"
+                "click .showApiBtn":"showApiInfo",
+                "click .editApiBtn":"editApiInfo",
+                "click .editGroupBtn":"editGroup"
             },
             initialize:function(){
                 groupList.on("reset",this.render,this);
                 groupList.on("add",this.addGroup,this);
                 apiList.on("reset",this.renderApi,this);
                 apiList.on("add",this.addApi,this);
+                Backbone.Events.on("addApi",this.addApi,this);
             },
             render:function(){
                 this.$el.empty();
@@ -292,12 +306,31 @@ $(function(){
                 Backbone.Events.trigger("showApiForm",gid);
             },
             addApi:function(model){
+                if(!model.get("id")){
+                    return;
+                }
                 var groupId=model.get("groupId");
                 this.$("[groupItemId="+groupId+"]:last").after(this.apiItemTmp({"item":model.toJSON()}));
             },
             showApiInfo:function(e){
                 var apiId=$(e.target).attr("apiId");
                 Backbone.Events.trigger("showApiDetails",apiId);
+            },
+            editApiInfo:function(e){
+                var apiId=$(e.target).attr("apiId");
+                Backbone.Events.trigger("editApiDetails",apiId);
+            },
+            editGroup:function(e){
+                var gid=$(e.target).attr("gid");
+                var group=groupList.at(gid);
+                var that=this;
+                layer.prompt({"value":group.get("groupName"),"title":"请输入组名","btn":['确认','取消']},function(groupName){
+                    group.set({"groupName":groupName});
+                    group.save();
+                    that.$("[groupItemId="+gid+"] h5").text(groupName);
+                    layer.closeAll();
+                },function(){}) ;
+
             }
         });
         var ApiFormView=Backbone.View.extend({
@@ -312,6 +345,14 @@ $(function(){
             },
             render:function(){
                 this.$el.html(this.apiFormTmp());
+                if(this.model){
+                    this.apiInfo=this.model;
+                    this.$("#apiName").val(this.model.get("apiName"));
+                    this.$("[value="+this.model.get("method")+"]").attr("checked","checked");
+                    this.$("#apiUrl").val(this.model.get("url"));
+                    this.$("#apiVersion").val(this.model.get("apiVersion"));
+                    this.$("#apiDesc").val(this.model.get("apiDesc"));
+                }
             },
             invalid:function(model,err){
                 layer.msg(err);
@@ -319,7 +360,7 @@ $(function(){
             saveApi: function () {
                   var formData={
                       "apiName":this.$("#apiName").val(),
-                      "method":this.$("[name=method]").val(),
+                      "method":this.$("[name=method]:checked").val(),
                       "url":this.$("#apiUrl").val(),
                       "apiVersion":this.$("#apiVersion").val(),
                       "apiDesc":this.$("#apiDesc").val(),
@@ -327,8 +368,10 @@ $(function(){
                   };
                 this.apiInfo.set(formData);
                 if(this.apiInfo.isValid()){
+                    //一定要先把model添加到collection里面,然后才能保存model,不然model会去call server而不会保存到localStorage
                     apiList.add(this.apiInfo);
                     this.apiInfo.save();
+                    Backbone.Events.trigger("addApi",this.apiInfo);
                     this.remove();
                 }
             }
@@ -341,25 +384,30 @@ $(function(){
               "click #callBtn":"callApi",
               "click #cleanBtn":"cleanView",
               "click #saveBtn":"saveCall",
-              "click #generateBtn":"generateDoc"
+              "click #generateBtn":"generateDoc",
+              "click .deleteCallBtn":"deleteCall"
             },
             initialize:function(){
 
             },
             render:function(){
+
+                this.$el.html(this.apiDetailsTmp({"api":this.model.toJSON()}));
                 if(this.model.get("callList")){
                     this.callList=JSON.parse(this.model.get("callList"));
                 }else{
                     this.callList=[];
                 }
-                this.$el.html(this.apiDetailsTmp({"callList":this.callList,"api":this.model.toJSON()}));
+                var that=this;
+                _.each(this.callList,function(callRecord,index){
+                    that.$(".callList").prepend(that.apiCallItemTmp({"index":index,"item":callRecord}));
+                });
                 this.urlInpt=this.$("#urlInpt");
                 this.paramJson=this.$(".paramJson");
                 this.resultJson=this.$(".resultJson");
-
             },
             callApi:function(){
-                var param=this.paramJson.text();
+                var param=this.paramJson.val();
                 var url=this.urlInpt.val();
                 var method=this.model.get("method");
                 var that=this;
@@ -400,13 +448,13 @@ $(function(){
                 var callData={
                     "type":type,
                     "url":this.urlInpt.val(),
-                     "param":this.paramJson.text(),
+                     "param":this.paramJson.val(),
                      "result":this.resultJson.text()
                 };
                 this.callList.push(callData);
                 this.model.set({"callList":JSON.stringify(this.callList)});
                 this.model.save();
-                this.$(".callList").prepend(this.apiCallItemTmp({"item":callData}));
+                this.$(".callList").prepend(this.apiCallItemTmp({"index":this.callList.length-1,"item":callData}));
             },
             generateDoc:function(){
                 var groupName=groupList.at(this.model.get("groupId")).get("groupName");
@@ -416,12 +464,26 @@ $(function(){
                     area: ['620px', '540px'], //宽高
                     content: this.apiDocTmp({"groupName":groupName,"api":this.model.toJSON(),"callList":this.callList})
                 });
+            },
+            deleteCall:function(e){
+                var index=$(e.target).attr("callIndex");
+                var that=this;
+                layer.confirm("确认删除?",function(layerIndex){
+                       that.callList.splice(index,1);
+                       that.model.set({"callList":JSON.stringify(that.callList)});
+                       that.model.save();
+                       that.render();
+                   layer.close(layerIndex);
+                });
+
+
             }
         });
         var ApiInfoView=Backbone.View.extend({
             initialize:function(){
                 Backbone.Events.on("showApiForm",this.showForm,this);
                 Backbone.Events.on("showApiDetails",this.showApiDetails,this);
+                Backbone.Events.on("editApiDetails",this.editApiDetails,this);
 
             },
             showForm:function(gid){
@@ -436,6 +498,13 @@ $(function(){
                 var detailView=new ApiDetailsView({"model":apiModel});
                 detailView.render();
                 this.$el.html(detailView.el);
+            },
+            editApiDetails:function(apiId){
+                var apiModel=apiList.get(apiId);
+                this.$el.empty();
+                var formView=new ApiFormView({"model":apiModel});
+                formView.render();
+                this.$el.html(formView.el);
             }
         });
 
@@ -460,6 +529,15 @@ $(function(){
     function startApp(){
         groupList.fetch();
         apiList.fetch();
+    }
+
+    function strToJavaComment(str){
+        var lines=str.split("\n");
+        var result="";
+        for(var index in lines){
+            result=result+"*"+lines[index]+"<br>";
+        }
+        return result;
     }
 </script>
 </body>

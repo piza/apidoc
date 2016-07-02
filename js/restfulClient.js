@@ -1,8 +1,8 @@
 (function(){
     var restfulClient={};
 
-    var appName="http://localhost:8080/family";
-    var backendUrl=appName+"/api/v1";
+    var appName="http://182.92.79.29:8080/family";
+    var backendUrl=appName+"/api/v2";
     window.rsClient=restfulClient;
     window.restfulClient=restfulClient;
 
@@ -112,7 +112,9 @@
             }
         };
         if(syncOption.httpType=="POST" || syncOption.httpType=="PUT"){
-            ajaxOption.data=JSON.stringify(syncOption.data)
+            //ajaxOption.data=JSON.stringify(syncOption.data)
+            ajaxOption.data=syncOption.data;
+
         }
         $.ajax(ajaxOption);
 
