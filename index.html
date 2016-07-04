@@ -102,7 +102,10 @@
 <script type="text/template" id="apiCallItemTmp">
     <li class="list-group-item" callIndex="<%=index%>">
         <%=item.type%>
-        <button type="button" class="btn btn-default btn-sm pull-right deleteCallBtn" callIndex="<%=index%>">
+        <button type="button" class="btn btn-default btn-sm pull-right showCallBtn" callIndex="<%=index%>">
+            <span class="glyphicon glyphicon-chevron-right" aria-hidden="true" callIndex="<%=index%>"></span>
+        </button>
+        <button type="button" class="btn btn-default btn-sm pull-right deleteCallBtn" callIndex="<%=index%>" style="margin-right: 10px;">
             <span class="glyphicon glyphicon-remove" aria-hidden="true" callIndex="<%=index%>"></span>
         </button>
         <div class="clearfix"></div>
@@ -240,6 +243,11 @@
     * @apiName <%=api.apiName%><br>
     * @apiGroup  <%=groupName%><br>
     * @apiDescription <%=api.apiDesc%><br>
+    <%if(paramList.length>0){
+    _.each(paramList,function(paramItem){
+    %>
+    * @apiParam {<%=paramItem.dataType%>} <%=paramItem.apiParamDesc%> <br>
+    <%});}%>
     *<br>
     <%if(callList.length>0){
       _.each(callList,function(callRecord){
@@ -434,6 +442,7 @@ $(function(){
               "click #saveBtn":"saveCall",
               "click #generateBtn":"generateDoc",
               "click .deleteCallBtn":"deleteCall",
+              "click .showCallBtn":"showCall",
               "click #addApiParamBtn":"showApiParamForm",
               "click .saveApiParamBtn":"saveApiParam",
               "click .cancelSaveApiParamBtn":"cancelSaveApiParam"
@@ -525,7 +534,12 @@ $(function(){
                     type: 1,
                     skin: 'layui-layer-rim', //加上边框
                     area: ['620px', '540px'], //宽高
-                    content: this.apiDocTmp({"groupName":groupName,"api":this.model.toJSON(),"callList":this.callList})
+                    content: this.apiDocTmp({
+                        "groupName":groupName,
+                        "api":this.model.toJSON(),
+                        "callList":this.callList,
+                        "paramList":this.paramList
+                    })
                 });
             },
             deleteCall:function(e){
@@ -538,6 +552,13 @@ $(function(){
                        that.render();
                    layer.close(layerIndex);
                 });
+            },
+            showCall:function(e){
+                var index=$(e.target).attr("callIndex");
+                var callRecord=this.callList[index];
+                this.urlInpt.val(callRecord.url);
+                this.paramJson.val(callRecord.param);
+                this.resultJson.text(callRecord.result);
             },
             showApiParamForm:function(){
                 this.$("#apiParamFormWrapper").html(this.apiParamFormTmp());
