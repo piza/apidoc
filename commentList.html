@@ -55,7 +55,7 @@
     <%if(paramList.length>0){
     _.each(paramList,function(paramItem){
     %>
-    * @apiParam {<%=paramItem.dataType%>} <%=paramItem.apiParamDesc%> <br>
+    * @apiParam {<%=paramItem.dataType%>} <%=paramItem.apiParamName%> <%=paramItem.apiParamDesc%> <br>
     <%});}%>
     *<br>
     <%if(callList.length>0){
@@ -129,6 +129,7 @@
                     "callList":JSON.parse(item.get("callList") || "[]"),
                     "paramList":JSON.parse(item.get("paramList") ||"[]")
                 }));
+                this.commentList.append("<br>");
             }
 
         });
