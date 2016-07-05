@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" href="/images/logo.ico" />
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/bootstrap-theme.min.css" rel="stylesheet">
+    <link href="css/apidoc.css" rel="stylesheet">
+    <link href="css/font-awesome.min.css" rel="stylesheet">
+
+    <link href="js/skin/layer.css" rel="stylesheet">
+    <link href="js/skin/layer.ext.css" rel="stylesheet">
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12" >
+            <p id="commentList">
+
+            </p>
+        </div>
+    </div>
+</div>
+
+<script src="js/jquery.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/underscore.js"></script>
+<script src="js/backbone.1.3.3.js"></script>
+<script src="js/backbone.localStorage.js"></script>
+
+<script src="js/json2.js"></script>
+<script src="js/layer.js"></script>
+<script src="js/layer.ext.js"></script>
+<script src="js/restfulClient.js"></script>
+
+
+<script type="text/template" id="apiDocTmp">
+    /**<br>
+    * @api {<%=api.method%>} <%=api.url%> <%=api.apiName%><br>
+    * @apiVersion <%=api.apiVersion%><br>
+    * @apiName <%=api.apiName%><br>
+    * @apiGroup  <%=groupName%><br>
+    * @apiDescription <%=api.apiDesc%><br>
+    <%if(paramList.length>0){
+    _.each(paramList,function(paramItem){
+    %>
+    * @apiParam {<%=paramItem.dataType%>} <%=paramItem.apiParamDesc%> <br>
+    <%});}%>
+    *<br>
+    <%if(callList.length>0){
+    _.each(callList,function(callRecord){
+    %>
+    <%if(api.method == "POST" || api.method == "PUT"){%>
+    *@apiParamExample {json} 参数<br>
+    <%=strToJavaComment(callRecord.param)%>
+    <%}%>
+    *@<%=callRecord.type%> <%=callRecord.url%><br>
+    <%=strToJavaComment(callRecord.result)%>
+    <%});}%>
+    */
+</script>
+<script  type="text/javascript">
+    var groupList,apiList,listView,infoView;
+    $(function(){
+        initPage();
+        startApp();
+    });
+
+    function initPage() {
+        var ApiInfoModel = Backbone.Model.extend({
+            validate: function (attrs, option) {
+                if (attrs.apiName.length < 1) {
+                    return "API名字不能为空";
+                }
+                if (attrs.method.length < 1) {
+                    return "请选择方法";
+                }
+                if (attrs.url.length < 1) {
+                    return "APIURL不能为空";
+                }
+                if (attrs.apiVersion.length < 1) {
+                    return "API版本不能为空";
+                }
+            }
+        });
+        var ApiListCollection = Backbone.Collection.extend({
+            model: ApiInfoModel,
+            localStorage: new Backbone.LocalStorage("apidoc-api")
+        });
+        var GroupItemModel = Backbone.Model.extend({});
+        var ApiGroupCollection = Backbone.Collection.extend({
+            model: GroupItemModel,
+            //本地存储历史数据
+            localStorage: new Backbone.LocalStorage("apidoc-group")
+        });
+        groupList = new ApiGroupCollection();
+        apiList = new ApiListCollection();
+        var ApiListView = Backbone.View.extend({
+            apiDocTmp: _.template($("#apiDocTmp").html()),
+            events: {
+
+            },
+            initialize: function () {
+//                groupList.on("reset", this.render, this);
+//                groupList.on("add", this.addGroup, this);
+//                apiList.on("reset", this.renderApi, this);
+                apiList.on("add", this.addApi, this);
+                this.commentList=$("#commentList");
+            },
+            render: function () {
+
+            },
+            addApi: function (item) {
+                var groupName=groupList.at(item.get("groupId")).get("groupName");
+                this.commentList.append(this.apiDocTmp({
+                    "groupName":groupName,
+                    "api":item.toJSON(),
+                    "callList":JSON.parse(item.get("callList") || "[]"),
+                    "paramList":JSON.parse(item.get("paramList") ||"[]")
+                }));
+            }
+
+        });
+
+        var listView=new ApiListView();
+
+    }
+    function startApp(){
+        groupList.fetch();
+        apiList.fetch();
+
+    }
+
+    function strToJavaComment(str){
+        var lines=str.split("\n");
+        var result="";
+        for(var index in lines){
+            result=result+"*"+lines[index]+"<br>";
+        }
+        return result;
+    }
+</script>
+</body>
+</html>

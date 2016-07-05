@@ -39,7 +39,7 @@
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
             <ul class="nav navbar-nav">
                 <li class="active"><a href="https://github.com/piza/apidoc" target="_blank">源码 <span class="sr-only">(current)</span></a></li>
-                <li><a href="#">文档生成</a></li>
+                <li><a href="commentList.html" target="_blank">文档生成</a></li>
             </ul>
 
 
@@ -47,21 +47,21 @@
     </div><!-- /.container-fluid -->
 </nav>
 <div class="container-fluid">
-<div class="row">
-    <div class="col-md-4" id="apiList">
-        <h5 class="title"><strong class="pull-left">API列表</strong>
-            <!--<input type="button" class="btn btn-success pull-right" value="新建Api" id="addApiBtn"/>-->
-            <input type="button" class="btn btn-success pull-right" value="新建组" id="addGroupBtn"/>
-            <div class="clearfix"></div>
-        </h5>
-        <ul class="list-group" id="apiListUl"></ul>
-    </div>
-    <div class="col-md-8">
-        <h5 class="title">API详情</h5>
-        <div id="apiInfo"></div>
-    </div>
+    <div class="row">
+        <div class="col-md-4" id="apiList">
+            <h5 class="title"><strong class="pull-left">API列表</strong>
+                <!--<input type="button" class="btn btn-success pull-right" value="新建Api" id="addApiBtn"/>-->
+                <input type="button" class="btn btn-success pull-right" value="新建组" id="addGroupBtn"/>
+                <div class="clearfix"></div>
+            </h5>
+            <ul class="list-group" id="apiListUl"></ul>
+        </div>
+        <div class="col-md-8">
+            <h5 class="title">API详情</h5>
+            <div id="apiInfo"></div>
+        </div>
 
-</div>
+    </div>
 </div>
 
 <script src="js/jquery.min.js"></script>
@@ -76,16 +76,16 @@
 <script src="js/restfulClient.js"></script>
 
 <script type="text/template" id="groupItemTmp">
-       <li class="list-group-item active" groupItemId="<%=gid%>">
-           <h5 class="pull-left"><%=item.groupName%></h5>
-           <button type="button" class="btn btn-default btn-sm pull-right addApiBtn" gid="<%=gid%>">
-               <span class="glyphicon glyphicon-plus-sign" aria-hidden="true" gid="<%=gid%>"></span>
-           </button>
-           <button type="button" class="btn btn-default btn-sm pull-right editGroupBtn" gid="<%=gid%>" style="margin-right: 10px;">
-               <span class="glyphicon glyphicon-pencil" aria-hidden="true" gid="<%=gid%>"></span>
-           </button>
-           <div class="clearfix"></div>
-       </li>
+    <li class="list-group-item active" groupItemId="<%=gid%>">
+        <h5 class="pull-left"><%=item.groupName%></h5>
+        <button type="button" class="btn btn-default btn-sm pull-right addApiBtn" gid="<%=gid%>">
+            <span class="glyphicon glyphicon-plus-sign" aria-hidden="true" gid="<%=gid%>"></span>
+        </button>
+        <button type="button" class="btn btn-default btn-sm pull-right editGroupBtn" gid="<%=gid%>" style="margin-right: 10px;">
+            <span class="glyphicon glyphicon-pencil" aria-hidden="true" gid="<%=gid%>"></span>
+        </button>
+        <div class="clearfix"></div>
+    </li>
 </script>
 <script type="text/template" id="apiItemTmp">
     <li class="list-group-item" groupItemId="<%=item.groupId%>">
@@ -112,18 +112,21 @@
     </li>
 </script>
 <script type="text/template" id="apiParamItemTmp">
-    <div class="col-md-4" id="param-item-<%=index%>">
+    <%if(!update){%>
+    <div class="col-md-12" id="param-item-<%=index%>">
+        <%}%>
         <span><%=item.apiParamName%></span>
         <span><%=item.dataType%></span>
         <span><%=item.apiParamDesc%></span>
         <button type="button" class="btn btn-default btn-sm pull-right deleteParamBtn" paramIndex="<%=index%>">
             <span class="glyphicon glyphicon-remove" aria-hidden="true" paramIndex="<%=index%>"></span>
         </button>
-        <button type="button" class="btn btn-default btn-sm pull-right editParamBtn" paramIndex="<%=index%>">
-            <span class="glyphicon glyphicon-plus-sign" aria-hidden="true" paramIndex="<%=index%>"></span>
+        <button type="button" class="btn btn-default btn-sm pull-right editParamBtn" paramIndex="<%=index%>" style="margin-right: 15px;">
+            <span class="glyphicon glyphicon-pencil" aria-hidden="true" paramIndex="<%=index%>" ></span>
         </button>
-
+   <%if(!update){%>
     </div>
+    <%}%>
 </script>
 <script type="text/template" id="apiFormTmp">
     <form class="form-horizontal">
@@ -135,32 +138,32 @@
         </div>
         <div class="form-group">
             <label class="col-md-2">api 方法</label>
-        <div class="col-md-8 radio" style="padding-bottom: 5px;padding-top: 0px;">
-            <label class="radio-inline">
-                <input type="radio" name="method" value="GET"> GET
-            </label>
-            <label class="radio-inline">
-                <input type="radio" name="method" value="POST"> POST
-            </label>
-            <label class="radio-inline">
-                <input type="radio" name="method" value="PUT"> PUT
-            </label>
-            <label class="radio-inline">
-                <input type="radio" name="method" value="DELETE"> DELETE
-            </label>
-        </div>
+            <div class="col-md-8 radio" style="padding-bottom: 5px;padding-top: 0px;">
+                <label class="radio-inline">
+                    <input type="radio" name="method" value="GET"> GET
+                </label>
+                <label class="radio-inline">
+                    <input type="radio" name="method" value="POST"> POST
+                </label>
+                <label class="radio-inline">
+                    <input type="radio" name="method" value="PUT"> PUT
+                </label>
+                <label class="radio-inline">
+                    <input type="radio" name="method" value="DELETE"> DELETE
+                </label>
+            </div>
         </div>
         <div class="form-group">
             <label class="col-md-2" for="apiUrl">api url</label>
             <div class="col-md-8">
-            <input type="text" class="form-control" id="apiUrl" placeholder="api url">
+                <input type="text" class="form-control" id="apiUrl" placeholder="api url">
             </div>
         </div>
         <div class="form-group">
             <label class="col-md-2" for="apiVersion">api 版本</label>
             <div class="col-md-8">
-            <input type="text" class="form-control" id="apiVersion" placeholder="api 版本">
-                </div>
+                <input type="text" class="form-control" id="apiVersion" placeholder="api 版本">
+            </div>
         </div>
         <div class="form-group">
             <label class="col-md-2" for="apiDesc">api 描述</label>
@@ -176,7 +179,7 @@
 <script type="text/template" id="apiDetailsTmp">
     <div class="row">
         <div class="col-md-6">
-            <input type="button" class="btn btn-success pull-right" style="margin-top: -46px;" value="生成注释" id="generateBtn">
+            <input type="button" class="btn btn-success pull-right" style="margin-top: -46px;" value="注释预览" id="generateBtn">
         </div>
     </div>
     <br>
@@ -197,7 +200,11 @@
             <label>描述:</label><span><%=api.apiDesc%></span>
         </div>
     </div>
-    <h5><input type="button" class="btn btn-success pull-right" id="addApiParamBtn" value="添加参数说明">  </h5>
+    <h5 class="title">
+        <span class="pull-left">参数列表:</span>
+        <input type="button" class="btn btn-success pull-right" id="addApiParamBtn" value="添加参数说明" style=" margin-top: -15px;">
+        <div class="clearfix"></div>
+    </h5>
     <div class="row" id="apiParamList">
 
     </div>
@@ -214,9 +221,9 @@
         </div>
         <div class="col-md-7">
             <div class="row">
-               <div class="col-md-12">
-                   <input type="text" class="form-control" id="urlInpt" value="<%=api.url%>">
-               </div>
+                <div class="col-md-12">
+                    <input type="text" class="form-control" id="urlInpt" value="<%=api.url%>">
+                </div>
             </div>
             <h5 class="title">
                 <input type="button" class="btn btn-success"  value="call" id="callBtn" style="margin-right: 15px;">
@@ -250,7 +257,7 @@
     <%});}%>
     *<br>
     <%if(callList.length>0){
-      _.each(callList,function(callRecord){
+    _.each(callList,function(callRecord){
     %>
     <%if(api.method == "POST" || api.method == "PUT"){%>
     *@apiParamExample {json} 参数<br>
@@ -266,7 +273,9 @@
     <form class="form-inline">
         <div class="form-group">
             <label for="apiParamName">名字:</label>
-                <input type="text" class="form-control" id="apiParamName" placeholder="api param 名字">
+            <input type="hidden" id="apiParamIndex">
+
+            <input type="text" class="form-control" id="apiParamName" placeholder="api param 名字">
         </div>
         <div class="form-group">
             <label >数据类型:</label>
@@ -286,12 +295,13 @@
 
     </form>
 </script>
+
 <script  type="text/javascript">
     var groupList,apiList,listView,infoView;
-$(function(){
-   initPage();
-    startApp();
-});
+    $(function(){
+        initPage();
+        startApp();
+    });
 
     function initPage(){
         var ApiInfoModel=Backbone.Model.extend({
@@ -391,8 +401,9 @@ $(function(){
             apiFormTmp: _.template($("#apiFormTmp").html()),
             groupId:-1,
             events:{
-              "click .saveApiBtn":"saveApi"
+                "click .saveApiBtn":"saveApi"
             },
+            dataModel:null,
             initialize:function(){
                 this.apiInfo=new ApiInfoModel();
                 this.apiInfo.on("invalid",this.invalid,this);
@@ -401,31 +412,33 @@ $(function(){
                 this.$el.html(this.apiFormTmp());
                 if(this.model){
                     this.apiInfo=this.model;
-                    this.$("#apiName").val(this.model.get("apiName"));
-                    this.$("[value="+this.model.get("method")+"]").attr("checked","checked");
-                    this.$("#apiUrl").val(this.model.get("url"));
-                    this.$("#apiVersion").val(this.model.get("apiVersion"));
-                    this.$("#apiDesc").val(this.model.get("apiDesc"));
+                    this.$("#apiName").val(this.apiInfo.get("apiName"));
+                    this.$("[value="+this.apiInfo.get("method")+"]").attr("checked","checked");
+                    this.$("#apiUrl").val(this.apiInfo.get("url"));
+                    this.$("#apiVersion").val(this.apiInfo.get("apiVersion"));
+                    this.$("#apiDesc").val(this.apiInfo.get("apiDesc"));
                 }
             },
             invalid:function(model,err){
                 layer.msg(err);
             },
             saveApi: function () {
-                  var formData={
-                      "apiName":this.$("#apiName").val(),
-                      "method":this.$("[name=method]:checked").val(),
-                      "url":this.$("#apiUrl").val(),
-                      "apiVersion":this.$("#apiVersion").val(),
-                      "apiDesc":this.$("#apiDesc").val(),
-                      "groupId":this.groupId
-                  };
+                var formData={
+                    "apiName":this.$("#apiName").val(),
+                    "method":this.$("[name=method]:checked").val(),
+                    "url":this.$("#apiUrl").val(),
+                    "apiVersion":this.$("#apiVersion").val(),
+                    "apiDesc":this.$("#apiDesc").val(),
+                    "groupId":this.groupId
+                };
                 this.apiInfo.set(formData);
                 if(this.apiInfo.isValid()){
                     //一定要先把model添加到collection里面,然后才能保存model,不然model会去call server而不会保存到localStorage
-                    apiList.add(this.apiInfo);
+                    if(!this.apiInfo.id){
+                        apiList.add(this.apiInfo);
+                        Backbone.Events.trigger("addApi",this.apiInfo);
+                    }
                     this.apiInfo.save();
-                    Backbone.Events.trigger("addApi",this.apiInfo);
                     this.remove();
                 }
             }
@@ -437,15 +450,17 @@ $(function(){
             paramItemTmp: _.template($("#apiParamItemTmp").html()),
             apiParamFormTmp: _.template($("#apiParamFormTmp").html()),
             events:{
-              "click #callBtn":"callApi",
-              "click #cleanBtn":"cleanView",
-              "click #saveBtn":"saveCall",
-              "click #generateBtn":"generateDoc",
-              "click .deleteCallBtn":"deleteCall",
-              "click .showCallBtn":"showCall",
-              "click #addApiParamBtn":"showApiParamForm",
-              "click .saveApiParamBtn":"saveApiParam",
-              "click .cancelSaveApiParamBtn":"cancelSaveApiParam"
+                "click #callBtn":"callApi",
+                "click #cleanBtn":"cleanView",
+                "click #saveBtn":"saveCall",
+                "click #generateBtn":"generateDoc",
+                "click .deleteCallBtn":"deleteCall",
+                "click .showCallBtn":"showCall",
+                "click #addApiParamBtn":"showApiParamForm",
+                "click .saveApiParamBtn":"saveApiParam",
+                "click .cancelSaveApiParamBtn":"cancelSaveApiParam",
+                "click .deleteParamBtn":"deleteParam",
+                "click .editParamBtn":"editParam"
             },
             initialize:function(){
 
@@ -471,7 +486,7 @@ $(function(){
                 }
                 var that=this;
                 _.each(this.paramList,function(param,index){
-                    that.$("#apiParamList").append(that.paramItemTmp({"index":index,"item":param}));
+                    that.$("#apiParamList").append(that.paramItemTmp({"update":false,"index":index,"item":param}));
                 });
 
                 this.urlInpt=this.$("#urlInpt");
@@ -520,8 +535,8 @@ $(function(){
                 var callData={
                     "type":type,
                     "url":this.urlInpt.val(),
-                     "param":this.paramJson.val(),
-                     "result":this.resultJson.text()
+                    "param":this.paramJson.val(),
+                    "result":this.resultJson.text()
                 };
                 this.callList.push(callData);
                 this.model.set({"callList":JSON.stringify(this.callList)});
@@ -546,11 +561,11 @@ $(function(){
                 var index=$(e.target).attr("callIndex");
                 var that=this;
                 layer.confirm("确认删除?",function(layerIndex){
-                       that.callList.splice(index,1);
-                       that.model.set({"callList":JSON.stringify(that.callList)});
-                       that.model.save();
-                       that.render();
-                   layer.close(layerIndex);
+                    that.callList.splice(index,1);
+                    that.model.set({"callList":JSON.stringify(that.callList)});
+                    that.model.save();
+                    that.render();
+                    layer.close(layerIndex);
                 });
             },
             showCall:function(e){
@@ -570,17 +585,47 @@ $(function(){
                     "apiParamDesc":this.$("#apiParamDesc").val()
                 };
                 if(paramData.apiParamName.length<1 ||paramData.dataType.length<1
-                ||paramData.apiParamDesc.length<1 ){
+                        ||paramData.apiParamDesc.length<1 ){
                     return layer.msg("参数不能为空!");
                 }
-                this.paramList.push(paramData);
+                var paramIndex=this.$("#apiParamIndex").val();
+                if(paramIndex.length>0){
+                    this.paramList[paramIndex]=paramData;
+                    this.$("#param-item-"+paramIndex).html(this.paramItemTmp({"update":true,"index":paramIndex,"item":paramData}));
+                }else{
+                    this.paramList.push(paramData);
+                    this.$("#apiParamList").append(this.paramItemTmp({"update":false,"index":this.paramList.length-1,"item":paramData}));
+                }
+
                 this.model.set({"paramList":JSON.stringify(this.paramList)});
                 this.model.save();
-                this.$("#apiParamList").append(this.paramItemTmp({"index":this.paramList.length-1,"item":paramData}));
                 this.$("#apiParamFormWrapper").empty();
             },
             cancelSaveApiParam:function(){
                 this.$("#apiParamFormWrapper").empty();
+            },
+            deleteParam:function(e){
+                var paramIndex=$(e.target).attr("paramIndex");
+                var that=this;
+                layer.confirm("确定删除?",{btn:['确定','取消']},function(){
+                    that.paramList.splice(paramIndex,1);
+                    that.model.set({"paramList":JSON.stringify(that.paramList)});
+                    that.model.save();
+                    that.$("#param-item-"+paramIndex).remove();
+                    layer.closeAll();
+                },function(){
+                    layer.closeAll();
+                });
+            },
+            editParam:function(e){
+                var paramIndex=$(e.target).attr("paramIndex");
+                var paramData=this.paramList[paramIndex];
+                this.$("#apiParamFormWrapper").html(this.apiParamFormTmp());
+
+                this.$("#apiParamIndex").val(paramIndex);
+                this.$("#apiParamName").val(paramData.apiParamName);
+                this.$("[value="+paramData.dataType+"]").val("selected","selected");
+                this.$("#apiParamDesc").val(paramData.apiParamDesc);
             }
         });
         var ApiInfoView=Backbone.View.extend({
@@ -607,6 +652,7 @@ $(function(){
                 var apiModel=apiList.get(apiId);
                 this.$el.empty();
                 var formView=new ApiFormView({"model":apiModel});
+                formView.groupId=apiModel.get("groupId");
                 formView.render();
                 this.$el.html(formView.el);
             }
@@ -618,21 +664,23 @@ $(function(){
         infoView=new ApiInfoView({"el":$("#apiInfo")});
 
         $("#addGroupBtn").click(function(){
-           layer.prompt({"title":"请输入组名","btn":['确认','取消']},function(groupName){
+            layer.prompt({"title":"请输入组名","btn":['确认','取消']},function(groupName){
                 var model=new GroupItemModel();
-                 model.set({"groupName":groupName});
+                model.set({"groupName":groupName});
                 groupList.add(model);
-               model.save();
-               layer.closeAll();
-           },function(){}) ;
+                model.save();
+                layer.closeAll();
+            },function(){}) ;
         });
 
 
     }
 
     function startApp(){
-        groupList.fetch();
-        apiList.fetch();
+        groupList.fetch().then(function(){
+            apiList.fetch();
+        });
+
     }
 
     function strToJavaComment(str){
